@@ -1,6 +1,5 @@
-package SpotifyAPI;
+package SpotifyAPI.UserPlaylists;
 
-import com.fasterxml.jackson.databind.node.POJONode;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,11 +12,14 @@ import java.util.logging.Logger;
 
 import static SpotifyAPI.Requests.sendRequest;
 
-public class SpotifyApiHandler {
+public class PlaylistCreator {
     private static final Logger LOGGER = SpotifyPlaylistApplication.LOGGER;
 
+    public static void create(){
+        createPlaylists(mergeItems(sendRequest("https://api.spotify.com/v1/me/playlists")));
+    }
 
-    public static JSONArray mergeItems(ArrayList<String> jsons) {
+    private static JSONArray mergeItems(ArrayList<String> jsons) {
         if (jsons == null) throw new NullPointerException("JSONS cant be null");
         if (jsons.size() == 0) try {
             throw new Exception("Size of jsons must be at least 1");
@@ -34,7 +36,7 @@ public class SpotifyApiHandler {
         return arr;
     }
 
-    public static void createPlaylists(JSONArray items) {
+    private static void createPlaylists(JSONArray items) {
         for (int i = 0; i < items.length(); i++) {
             JSONObject current = items.getJSONObject(i);
             String url = current.getString("href");
@@ -47,7 +49,7 @@ public class SpotifyApiHandler {
         }
     }
 
-    public static Track[] getTracks(String url, int total, String playlistName, Playlist playlist) {
+    private static Track[] getTracks(String url, int total, String playlistName, Playlist playlist) {
 
         Track[] tracks = new Track[total];
         JSONArray arr = mergeItems(sendRequest(url));
