@@ -1,6 +1,7 @@
 package spotifyplaylist;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -9,7 +10,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,105 +21,130 @@ import java.util.logging.Logger;
 @SpringBootApplication
 public class SpotifyPlaylistApplication {
 
-	public static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    public static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    private static final String TOKEN = "BQAZf857yIyd3C3JE7Ji_Kw0msWXJXGW0q4Pp1rZ0SuMOUiipLJt7XAvkSsUGxQ_FiMfY87wbvMZD4ZH49hjxjp4c23ID3VFqmAg1cq60QN5YU7n_rZEwcEnGrUQFaPQhswO-kL2muPtIGzb9xntvCUGwyDHhHkfaX-7rdrQcF0ILpy7vL97GLaxqL2h8bbaLKFukHmzn9Z0SxGVVDIBno_LdV4";
 
-	public static void main(String[] args) {
-		SpringApplication.run(SpotifyPlaylistApplication.class, args);
-		String s = sendRequest("https://api.spotify.com/v1/me/playlists");
-		handleJSON(s);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(SpotifyPlaylistApplication.class, args);
+        ArrayList<String> s = sendRequest("https://api.spotify.com/v1/me/playlists");
+        JSONArray arr = mergeItems(s);
+        createPlaylists(arr);
+    }
 
-	public static String sendRequest(String url){
-		InputStream response = getResponse(applyDefaultRequestProperties(createConnection(url)));
-		String json = "";
+    public static JSONArray mergeItems(ArrayList<String> jsons) {
+        if (jsons == null) throw new NullPointerException("JSONS cant be null");
+        if (jsons.size() == 0) try {
+            throw new Exception("Size of jsons must be at least 1");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
-		try (Scanner scanner = new Scanner(response)) {
-			String responseBody = scanner.useDelimiter("\\A").next();
-			json += responseBody;
-		}
+        JSONArray arr = new JSONObject(jsons.get(0)).getJSONArray("items");
+        for (int i = 1; i < jsons.size(); i++) {
+            JSONArray current = new JSONObject(jsons.get(i)).getJSONArray("items");
+            arr.putAll(current);
+        }
 
-		return json;
-	}
+        return arr;
+    }
+
+    public static ArrayList<String> sendRequest(String url) {
+        return sendRequest(url, new ArrayList<String>());
+    }
+
+    public static ArrayList<String> sendRequest(String url, ArrayList<String> json) {
+        InputStream response = getResponse(applyDefaultRequestProperties(createConnection(url)));
+
+        String currentJson = "";
+
+        try (Scanner scanner = new Scanner(response)) {
+            String responseBody = scanner.useDelimiter("\\A").next();
+            currentJson += responseBody;
+        }
+
+        json.add(currentJson);
+        String next = getNext(currentJson);
+
+        if (next != null) return sendRequest(next, json);
+        return json;
+    }
 
 
+    private static String getNext(String json) {
+        JSONObject object = new JSONObject(json);
 
-	public static void handleJSON(String jsonString){
-		JSONObject object = new JSONObject(jsonString);
-		JSONArray arr = object.getJSONArray("items");
-		for(int i = 0; i < arr.length(); i++) {
-			JSONObject current = arr.getJSONObject(i);
-			String url = current.getString("href");
-			String id = current.getString("id");
-			String name = current.getString("name");
-			String imageUrl = current.getJSONArray("images").getJSONObject(0).getString("url");
 
-			JSONObject tracksObject = current.getJSONObject("tracks");
+        if (object.isNull("next")) return null;
+        return object.getString("next");
+    }
 
-			Track[] tracks = getTracks(tracksObject.getString("href"), tracksObject.getInt("total"));
+    public static void createPlaylists(JSONArray items) {
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject current = items.getJSONObject(i);
+            String url = current.getString("href");
+            String name = current.getString("name");
+            LOGGER.info("Creating Playlist " + name);
+            JSONObject tracksObject = current.getJSONObject("tracks");
+            Track[] tracks = tracks = getTracks(tracksObject.getString("href"), tracksObject.getInt("total"), name);
+            new Playlist(url, name, tracks);
+        }
+    }
 
-			//LOGGER.info("Creating Playlist with Attributes: " + "url: " + url + " id: " + id + " name: " + name + " image: " + imageUrl);
-			LOGGER.info("Creating Playlist " + name);
+    public static Track[] getTracks(String url, int total, String playlistName) {
 
-			new Playlist(url, id, name, imageUrl, tracks);
-		}
-	}
+        Track[] tracks = new Track[total];
+        JSONArray arr = mergeItems(sendRequest(url));
 
-	public static Track[] getTracks(String url, int total){
+        for (int i = 0; i < arr.length(); i++) {
+            JSONObject track = arr.getJSONObject(i).getJSONObject("track");
+            String name = track.getString("name");
 
-		Track[] tracks = new Track[total];
-		String response = sendRequest(url);
-		JSONObject object = new JSONObject(response);
-		JSONArray arr = object.getJSONArray("items");
+            try {
+                String id = track.getString("id");
+                tracks[i] = new Track(id, name);
+            } catch (JSONException e) {
+                LOGGER.info("Song " + name + " from Playlist " + playlistName + " keeps unhandled cause it's offline track");
+            }
+        }
 
-		for(int i = 0; i < arr.length(); i++){
-			JSONObject track = arr.getJSONObject(i).getJSONObject("track");
-			String id = track.getString("id");
-			String name = track.getString("name");
+        return tracks;
+    }
 
-			tracks[i] = new Track(id, name);
-		}
+    public static HttpURLConnection createConnection(String url) {
+        try {
+            return (HttpURLConnection) new URL(url).openConnection();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-		return tracks;
-	}
+    public static HttpURLConnection applyDefaultRequestProperties(HttpURLConnection connection) {
+        String authorization = "Bearer " + TOKEN;
+        String contentType = "application/json";
 
-	public static HttpURLConnection createConnection(String url){
-		try {
-			return (HttpURLConnection) new URL(url).openConnection();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+        Map<String, String> properties = Map.of("Authorization", authorization, "Content-Type", contentType);
 
-	public static HttpURLConnection applyDefaultRequestProperties(HttpURLConnection connection){
-		String authorization = "Bearer BQBqXC5xJsxkoCWYJ-7ja4Y9NgXvb6bY83S3N9OFa5vhca6bxDhv-16gFrTjPUY2MquWDKnf4_n7DG9_RVHuoy_lrpMUUKIf7TfzoAjBSsCM5XIgyccbQJWchG-IdhMSvbYYT0u6gxVasI8OQvKcaRRUjUlzGV1Ch0C8uEYZ8yMQnQE8gjMVjclnhgNW8mHuBp8y1B-wSaJWQD6YOWZzlKZjpDY";
-		String contentType = "application/json";
+        return applyRequestProperties(connection, properties);
+    }
 
-		Map<String, String> properties = Map.of(
-				"Authorization", authorization,
-				"Content-Type", contentType
-		);
+    public static HttpURLConnection applyRequestProperties(HttpURLConnection connection, Map<String, String> properties) {
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            connection.setRequestProperty(entry.getKey(), entry.getValue());
+        }
+        return connection;
+    }
 
-		return applyRequestProperties(connection, properties);
-	}
-
-	public static HttpURLConnection applyRequestProperties(HttpURLConnection connection, Map<String, String> properties){
-		for(Map.Entry<String, String> entry : properties.entrySet()){
-			connection.setRequestProperty(entry.getKey(), entry.getValue());
-		}
-		return connection;
-	}
-
-	public static InputStream getResponse(HttpURLConnection connection){
-		try {
-			return connection.getInputStream();
-		} catch (IOException e) {
-			InputStream response = connection.getErrorStream();
-			try (Scanner scanner = new Scanner(response)) {
-				String responseBody = scanner.useDelimiter("\\A").next();
-				LOGGER.log(Level.SEVERE, responseBody);
-			}
-			throw new RuntimeException(e);
-		}
-	}
+    public static InputStream getResponse(HttpURLConnection connection) {
+        try {
+            return connection.getInputStream();
+        } catch (IOException e) {
+            InputStream response = connection.getErrorStream();
+            try (Scanner scanner = new Scanner(response)) {
+                String responseBody = scanner.useDelimiter("\\A").next();
+                LOGGER.log(Level.SEVERE, responseBody);
+            }
+            throw new RuntimeException(e);
+        }
+    }
 
 }
