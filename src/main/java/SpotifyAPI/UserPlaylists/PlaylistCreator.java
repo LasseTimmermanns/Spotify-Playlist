@@ -10,6 +10,7 @@ import spotifyplaylist.Track;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import static SpotifyAPI.Requests.mergeItems;
 import static SpotifyAPI.Requests.sendRequest;
 
 public class PlaylistCreator {
@@ -19,22 +20,7 @@ public class PlaylistCreator {
         createPlaylists(mergeItems(sendRequest("https://api.spotify.com/v1/me/playlists", bearerToken)), bearerToken);
     }
 
-    private static JSONArray mergeItems(ArrayList<String> jsons) {
-        if (jsons == null) throw new NullPointerException("JSONS cant be null");
-        if (jsons.size() == 0) try {
-            throw new Exception("Size of jsons must be at least 1");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
 
-        JSONArray arr = new JSONObject(jsons.get(0)).getJSONArray("items");
-        for (int i = 1; i < jsons.size(); i++) {
-            JSONArray current = new JSONObject(jsons.get(i)).getJSONArray("items");
-            arr.putAll(current);
-        }
-
-        return arr;
-    }
 
     private static void createPlaylists(JSONArray items, String bearerToken) {
         for (int i = 0; i < items.length(); i++) {

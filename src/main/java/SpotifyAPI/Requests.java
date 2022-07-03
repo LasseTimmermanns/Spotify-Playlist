@@ -1,5 +1,6 @@
 package SpotifyAPI;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import spotifyplaylist.SpotifyPlaylistApplication;
 
@@ -16,7 +17,6 @@ import java.util.logging.Logger;
 
 public class Requests {
 
-
     private static final Logger LOGGER = SpotifyPlaylistApplication.LOGGER;
 
     public static ArrayList<String> sendRequest(String url, Map<String, String> params, String bearerToken) {
@@ -27,7 +27,7 @@ public class Requests {
             url += entry.getKey() + "=" + entry.getValue() + "&"; //Request ist egal ob am Ende ein & zu viel ist
         }
 
-        return sendRequest(url, new ArrayList<String>(), bearerToken);
+        return sendRequest(url, bearerToken);
     }
     public static ArrayList<String> sendRequest(String url, String bearerToken) {
         return sendRequest(url, new ArrayList<String>(), bearerToken);
@@ -48,6 +48,23 @@ public class Requests {
 
         if (next != null) return sendRequest(next, json, bearerToken);
         return json;
+    }
+
+    public static JSONArray mergeItems(ArrayList<String> jsons) {
+        if (jsons == null) throw new NullPointerException("JSONS cant be null");
+        if (jsons.size() == 0) try {
+            throw new Exception("Size of jsons must be at least 1");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        JSONArray arr = new JSONObject(jsons.get(0)).getJSONArray("items");
+        for (int i = 1; i < jsons.size(); i++) {
+            JSONArray current = new JSONObject(jsons.get(i)).getJSONArray("items");
+            arr.putAll(current);
+        }
+
+        return arr;
     }
 
     private static String getNextItemsFromAllEntries(String json) {
