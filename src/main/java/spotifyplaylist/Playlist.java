@@ -8,12 +8,15 @@ public class Playlist {
     private String url, name;
     private Track[] tracks;
 
-    public Playlist(String url, String name, Track[] tracks){
+    public Playlist(String url, String name){
         this.url = url;
         this.name = name;
-        this.tracks = tracks;
 
         all.add(this);
+    }
+
+    public void addTracks(Track[] tracks){
+        this.tracks = tracks;
     }
 
 }

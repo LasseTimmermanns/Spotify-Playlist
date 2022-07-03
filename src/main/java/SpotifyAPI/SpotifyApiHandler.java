@@ -1,5 +1,6 @@
 package SpotifyAPI;
 
+import com.fasterxml.jackson.databind.node.POJONode;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,14 +39,15 @@ public class SpotifyApiHandler {
             JSONObject current = items.getJSONObject(i);
             String url = current.getString("href");
             String name = current.getString("name");
+            Playlist playlist = new Playlist(url, name);
             LOGGER.info("Creating Playlist " + name);
             JSONObject tracksObject = current.getJSONObject("tracks");
-            Track[] tracks = tracks = getTracks(tracksObject.getString("href"), tracksObject.getInt("total"), name);
-            new Playlist(url, name, tracks);
+            Track[] tracks = tracks = getTracks(tracksObject.getString("href"), tracksObject.getInt("total"), name, playlist);
+            playlist.addTracks(tracks);
         }
     }
 
-    public static Track[] getTracks(String url, int total, String playlistName) {
+    public static Track[] getTracks(String url, int total, String playlistName, Playlist playlist) {
 
         Track[] tracks = new Track[total];
         JSONArray arr = mergeItems(sendRequest(url));
@@ -56,7 +58,7 @@ public class SpotifyApiHandler {
 
             try {
                 String id = track.getString("id");
-                tracks[i] = new Track(id, name);
+                tracks[i] = new Track(id, name, playlist);
             } catch (JSONException e) {
                 LOGGER.info("Song " + name + " from Playlist " + playlistName + " keeps unhandled cause it's offline track");
             }
