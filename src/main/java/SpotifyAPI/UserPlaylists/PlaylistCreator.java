@@ -15,8 +15,8 @@ import static SpotifyAPI.Requests.sendRequest;
 public class PlaylistCreator {
     private static final Logger LOGGER = SpotifyPlaylistApplication.LOGGER;
 
-    public static void create(){
-        createPlaylists(mergeItems(sendRequest("https://api.spotify.com/v1/me/playlists")));
+    public static void create(String bearerToken){
+        createPlaylists(mergeItems(sendRequest("https://api.spotify.com/v1/me/playlists", bearerToken)), bearerToken);
     }
 
     private static JSONArray mergeItems(ArrayList<String> jsons) {
@@ -36,7 +36,7 @@ public class PlaylistCreator {
         return arr;
     }
 
-    private static void createPlaylists(JSONArray items) {
+    private static void createPlaylists(JSONArray items, String bearerToken) {
         for (int i = 0; i < items.length(); i++) {
             JSONObject current = items.getJSONObject(i);
             String url = current.getString("href");
@@ -44,15 +44,15 @@ public class PlaylistCreator {
             Playlist playlist = new Playlist(url, name);
             LOGGER.info("Creating Playlist " + name);
             JSONObject tracksObject = current.getJSONObject("tracks");
-            Track[] tracks = tracks = getTracks(tracksObject.getString("href"), tracksObject.getInt("total"), name, playlist);
+            Track[] tracks = tracks = getTracks(tracksObject.getString("href"), tracksObject.getInt("total"), name, playlist, bearerToken);
             playlist.addTracks(tracks);
         }
     }
 
-    private static Track[] getTracks(String url, int total, String playlistName, Playlist playlist) {
+    private static Track[] getTracks(String url, int total, String playlistName, Playlist playlist, String bearerToken) {
 
         Track[] tracks = new Track[total];
-        JSONArray arr = mergeItems(sendRequest(url));
+        JSONArray arr = mergeItems(sendRequest(url, bearerToken));
 
         for (int i = 0; i < arr.length(); i++) {
             JSONObject track = arr.getJSONObject(i).getJSONObject("track");

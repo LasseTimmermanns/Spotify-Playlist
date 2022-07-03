@@ -17,14 +17,13 @@ public class Requests {
 
 
     private static final Logger LOGGER = SpotifyPlaylistApplication.LOGGER;
-    private static final String TOKEN = "BQAZf857yIyd3C3JE7Ji_Kw0msWXJXGW0q4Pp1rZ0SuMOUiipLJt7XAvkSsUGxQ_FiMfY87wbvMZD4ZH49hjxjp4c23ID3VFqmAg1cq60QN5YU7n_rZEwcEnGrUQFaPQhswO-kL2muPtIGzb9xntvCUGwyDHhHkfaX-7rdrQcF0ILpy7vL97GLaxqL2h8bbaLKFukHmzn9Z0SxGVVDIBno_LdV4";
 
-    public static ArrayList<String> sendRequest(String url) {
-        return sendRequest(url, new ArrayList<String>());
+    public static ArrayList<String> sendRequest(String url, String bearerToken) {
+        return sendRequest(url, new ArrayList<String>(), bearerToken);
     }
 
-    public static ArrayList<String> sendRequest(String url, ArrayList<String> json) {
-        InputStream response = getResponse(applyDefaultRequestProperties(createConnection(url)));
+    public static ArrayList<String> sendRequest(String url, ArrayList<String> json, String bearerToken) {
+        InputStream response = getResponse(applyDefaultRequestProperties(createConnection(url), bearerToken));
 
         String currentJson = "";
 
@@ -36,7 +35,7 @@ public class Requests {
         json.add(currentJson);
         String next = getNextItemsFromAllEntries(currentJson);
 
-        if (next != null) return sendRequest(next, json);
+        if (next != null) return sendRequest(next, json, bearerToken);
         return json;
     }
 
@@ -55,8 +54,8 @@ public class Requests {
         }
     }
 
-    public static HttpURLConnection applyDefaultRequestProperties(HttpURLConnection connection) {
-        String authorization = "Bearer " + TOKEN;
+    public static HttpURLConnection applyDefaultRequestProperties(HttpURLConnection connection, String bearerToken) {
+        String authorization = "Bearer " + bearerToken;
         String contentType = "application/json";
 
         Map<String, String> properties = Map.of("Authorization", authorization, "Content-Type", contentType);
