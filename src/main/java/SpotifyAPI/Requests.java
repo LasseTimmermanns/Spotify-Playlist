@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -18,6 +19,16 @@ public class Requests {
 
     private static final Logger LOGGER = SpotifyPlaylistApplication.LOGGER;
 
+    public static ArrayList<String> sendRequest(String url, Map<String, String> params, String bearerToken) {
+        if(params.isEmpty()) return sendRequest(url, new ArrayList<String>(), bearerToken);
+        url += "?";
+
+        for(Map.Entry<String, String> entry : params.entrySet()){
+            url += entry.getKey() + "=" + entry.getValue() + "&"; //Request ist egal ob am Ende ein & zu viel ist
+        }
+
+        return sendRequest(url, new ArrayList<String>(), bearerToken);
+    }
     public static ArrayList<String> sendRequest(String url, String bearerToken) {
         return sendRequest(url, new ArrayList<String>(), bearerToken);
     }
