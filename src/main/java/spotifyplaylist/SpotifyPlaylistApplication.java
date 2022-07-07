@@ -1,25 +1,21 @@
 package spotifyplaylist;
 
-import SpotifyAPI.UserPlaylists.PlaylistCreator;
-import org.json.JSONArray;
+import SpotifyAPI.Search.Search;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.util.ArrayList;
 import java.util.logging.Logger;
-
-import static SpotifyAPI.Requests.sendRequest;
-import static SpotifyAPI.UserPlaylists.PlaylistCreator.*;
-
 
 @SpringBootApplication
 public class SpotifyPlaylistApplication {
 
-    private static final String TOKEN = "BQAZf857yIyd3C3JE7Ji_Kw0msWXJXGW0q4Pp1rZ0SuMOUiipLJt7XAvkSsUGxQ_FiMfY87wbvMZD4ZH49hjxjp4c23ID3VFqmAg1cq60QN5YU7n_rZEwcEnGrUQFaPQhswO-kL2muPtIGzb9xntvCUGwyDHhHkfaX-7rdrQcF0ILpy7vL97GLaxqL2h8bbaLKFukHmzn9Z0SxGVVDIBno_LdV4";
+    private static final String TOKEN = "BQAAG8mU9Jd2q2kmXvFdMOp8JyJfsqPMpuqgTS0MCy5PtGSfpDu_9xhhunhTJvqb0BA0yJEj4f_LzLtVQTnX8AX6hxqVOCO-GlSy8x1fZFPCJkh5zEci9BXKGHniHN5yuBdSjtFz8AHGNV-sU2hkTfgKzDu26QX7gSGw35_bIQILjVLkn_eqpny_XFpeSyK3nCgqUGq-ztRdamLyIfg";
     public static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     public static void main(String[] args) {
         SpringApplication.run(SpotifyPlaylistApplication.class, args);
-        PlaylistCreator.create(TOKEN);
+        Search.search("Hey", TOKEN);
     }
+
+
 }

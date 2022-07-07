@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -58,7 +57,9 @@ public class Requests {
             throw new RuntimeException(e);
         }
 
+        LOGGER.info(Integer.toString(jsons.size()));
         JSONArray arr = new JSONObject(jsons.get(0)).getJSONArray("items");
+
         for (int i = 1; i < jsons.size(); i++) {
             JSONArray current = new JSONObject(jsons.get(i)).getJSONArray("items");
             arr.putAll(current);
