@@ -9,12 +9,12 @@ import java.util.logging.Logger;
 @SpringBootApplication
 public class SpotifyPlaylistApplication {
 
-    private static final String TOKEN = "BQAAG8mU9Jd2q2kmXvFdMOp8JyJfsqPMpuqgTS0MCy5PtGSfpDu_9xhhunhTJvqb0BA0yJEj4f_LzLtVQTnX8AX6hxqVOCO-GlSy8x1fZFPCJkh5zEci9BXKGHniHN5yuBdSjtFz8AHGNV-sU2hkTfgKzDu26QX7gSGw35_bIQILjVLkn_eqpny_XFpeSyK3nCgqUGq-ztRdamLyIfg";
+    private static final String TOKEN = "BQCA_xIJGfJB_JZzuYsd48iuSbJxdSwYElXg_v7p1jLEX9F7eEKh9ZbOVwjW67A5d043pYrZO-sE7VGu3MgFyOJCduVQF68zFuNTvL2ab7hMkqiJC7cSueMXUD7TmmccqRQ6jJhzhQwmD2GpHub4rB2P_iUDLzgZr87YJ4ouhXLfq17XhEHjIdS32EUg2TzHJjnP4CUkLY6XYdkzSL8";
     public static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     public static void main(String[] args) {
         SpringApplication.run(SpotifyPlaylistApplication.class, args);
-        Search.search("Hey", TOKEN);
+        QueryController.simulateRequest(TOKEN, "Hey");
     }
 
 
